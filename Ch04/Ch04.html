@@ -488,7 +488,7 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <blockquote>
 <p>1. Population-level (‘fixed’) effects</p>
 <p>…</p>
-<p>In case of the default intercept parameterization (discussed in the ‘Details’ section of <a href="http://127.0.0.1:29755/help/library/brms/help/brmsformula"><strong><code>brmsformula</code></strong></a>), general priors on class <code>"b"</code> will <u><strong><em>not</em></strong> <strong>affect the intercept</strong></u>. Instead, the intercept has its own parameter class named <code>"Intercept"</code> and priors can thus be specified via <code>set_prior("&lt;prior&gt;", class = "Intercept")</code>. Setting a prior on the intercept will not break vectorization of the other population-level effects. Note that technically, <u><strong>this prior is set on an intercept that results when internally centering all population-level predictors around zero to improve sampling efficiency</strong></u>. On this centered intercept, specifying a prior is actually much easier and intuitive than on the original intercept, since the former represents the expected response value when all predictors are at their means. To treat the intercept as an ordinary population-level effect and avoid the centering parameterization, use <code>0 + Intercept</code> on the right-hand side of the model formula.</p>
+<p>In case of the default intercept parameterization (discussed in the ‘Details’ section of <a href="http://127.0.0.1:29755/help/library/brms/help/brmsformula"><strong><code>brmsformula</code></strong></a>), general priors on class <code>"b"</code> will <u><strong><em>not</em>affect the intercept</strong></u>. Instead, the intercept has its own parameter class named <code>"Intercept"</code> and priors can thus be specified via <code>set_prior("&lt;prior&gt;", class = "Intercept")</code>. Setting a prior on the intercept will not break vectorization of the other population-level effects. Note that technically, <u><strong>this prior is set on an intercept that results when internally centering all population-level predictors around zero to improve sampling efficiency</strong></u>. On this centered intercept, specifying a prior is actually much easier and intuitive than on the original intercept, since the former represents the expected response value when all predictors are at their means. To treat the intercept as an ordinary population-level effect and avoid the centering parameterization, use <code>0 + Intercept</code> on the right-hand side of the model formula.</p>
 </blockquote>
 <p>We can manually centering variables beforehand, and put prior directly on <code>Intercept</code>.</p>
 </section>
@@ -631,7 +631,7 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <img data-src="Ch04_files/figure-revealjs/simulate-prior-params-1.svg" class="r-stretch quarto-figure-center"></section>
 <section id="simulated-height-from-the-priors-for-the-mean-weight" class="slide level2">
 <h2>Simulated <code>height</code> from the priors (for the mean <code>weight</code>)</h2>
-<div class="cell" data-layout-align="center" data-hash="Ch04_cache/revealjs/simulate-height_40e3adef608cdae87dcc17e8e1ab1f61">
+<div class="cell" data-layout-align="center" data-hash="Ch04_cache/revealjs/simulate-height_884d3b1b5eec127a07ac0ca85c25f52e">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>prior_pred <span class="sc">|&gt;</span> </span>
 <span id="cb14-2"><a href="#cb14-2"></a>  tidybayes<span class="sc">::</span><span class="fu">predicted_rvars</span>(</span>
 <span id="cb14-3"><a href="#cb14-3"></a>    <span class="fu">tibble</span>(<span class="at">weight_c =</span> <span class="dv">0</span>)</span>
@@ -643,12 +643,20 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <span id="cb14-9"><a href="#cb14-9"></a>    <span class="at">y =</span> <span class="st">"density"</span></span>
 <span id="cb14-10"><a href="#cb14-10"></a>  ) <span class="sc">+</span> </span>
 <span id="cb14-11"><a href="#cb14-11"></a>  theme_new</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-
 </div>
-<img data-src="Ch04_files/figure-revealjs/simulate-height-1.svg" class="r-stretch quarto-figure-center"></section>
-<section id="simulate-height-from-priors-across-weight" class="slide level2">
+
+</section>
+<section id="simulated-height-from-the-priors-for-the-mean-weight-output" class="slide level2 output-location-slide"><h2>Simulated <code>height</code> from the priors (for the mean <code>weight</code>)</h2><div class="cell output-location-slide" data-layout-align="center" data-hash="Ch04_cache/revealjs/simulate-height_884d3b1b5eec127a07ac0ca85c25f52e">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Ch04_files/figure-revealjs/simulate-height-1.svg"></p>
+</figure>
+</div>
+</div>
+</div></section><section id="simulate-height-from-priors-across-weight" class="slide level2">
 <h2>Simulate <code>height</code> from priors (across <code>weight</code>)</h2>
-<div class="cell" data-layout-align="center" data-hash="Ch04_cache/revealjs/simulate-height-all_3061b14a62c1d64c0dfcf44ec7b9874b">
+<div class="cell" data-layout-align="center" data-hash="Ch04_cache/revealjs/simulate-height-all_81b4d1b332df2b1645a31c495d358639">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>prior_pred <span class="sc">|&gt;</span> </span>
 <span id="cb15-2"><a href="#cb15-2"></a>  tidybayes<span class="sc">::</span><span class="fu">predicted_rvars</span>(</span>
 <span id="cb15-3"><a href="#cb15-3"></a>    <span class="at">newdata =</span> <span class="fu">tibble</span>(<span class="at">weight_c =</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">14</span>, <span class="dv">18</span>))</span>
@@ -661,12 +669,52 @@ scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <span id="cb15-10"><a href="#cb15-10"></a>    <span class="at">y =</span> <span class="st">"Predicted Height (cm)"</span></span>
 <span id="cb15-11"><a href="#cb15-11"></a>  ) <span class="sc">+</span> </span>
 <span id="cb15-12"><a href="#cb15-12"></a>  theme_new</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+</section>
+<section id="simulate-height-from-priors-across-weight-output" class="slide level2 output-location-slide"><h2>Simulate <code>height</code> from priors (across <code>weight</code>)</h2><div class="cell output-location-slide" data-layout-align="center" data-hash="Ch04_cache/revealjs/simulate-height-all_81b4d1b332df2b1645a31c495d358639">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Ch04_files/figure-revealjs/simulate-height-all-1.svg"></p>
+</figure>
+</div>
+</div>
+</div></section><section id="draw-lines-using-the-prior-predictive-simulation" class="slide level2">
+<h2>Draw lines using the prior predictive simulation</h2>
+<div class="cell" data-layout-align="center" data-hash="Ch04_cache/revealjs/draw-lines_01fa84eff5b0ce51de3674920341ec23">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a>d <span class="sc">|&gt;</span> </span>
+<span id="cb16-2"><a href="#cb16-2"></a>  modelr<span class="sc">::</span><span class="fu">data_grid</span>(weight_c) <span class="sc">|&gt;</span> </span>
+<span id="cb16-3"><a href="#cb16-3"></a>  <span class="fu">add_epred_draws</span>(prior_pred, <span class="at">ndraws =</span> <span class="dv">100</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb16-4"><a href="#cb16-4"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb16-5"><a href="#cb16-5"></a>  <span class="fu">geom_line</span>(</span>
+<span id="cb16-6"><a href="#cb16-6"></a>    <span class="fu">aes</span>(</span>
+<span id="cb16-7"><a href="#cb16-7"></a>      <span class="at">x =</span> weight_c <span class="sc">+</span> <span class="fu">mean</span>(d<span class="sc">$</span>weight),</span>
+<span id="cb16-8"><a href="#cb16-8"></a>      <span class="at">y =</span> .epred,</span>
+<span id="cb16-9"><a href="#cb16-9"></a>      <span class="at">group =</span> .draw,</span>
+<span id="cb16-10"><a href="#cb16-10"></a>    ),</span>
+<span id="cb16-11"><a href="#cb16-11"></a>    <span class="at">alpha =</span> .<span class="dv">3</span>,</span>
+<span id="cb16-12"><a href="#cb16-12"></a>    <span class="at">color =</span> <span class="st">"#08519C"</span></span>
+<span id="cb16-13"><a href="#cb16-13"></a>  ) <span class="sc">+</span></span>
+<span id="cb16-14"><a href="#cb16-14"></a>  <span class="fu">labs</span>(</span>
+<span id="cb16-15"><a href="#cb16-15"></a>    <span class="at">x =</span> <span class="st">"Weight (kg)"</span>,</span>
+<span id="cb16-16"><a href="#cb16-16"></a>    <span class="at">y =</span> <span class="st">"Predicted Height (cm)"</span></span>
+<span id="cb16-17"><a href="#cb16-17"></a>  ) <span class="sc">+</span> </span>
+<span id="cb16-18"><a href="#cb16-18"></a>  theme_new</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+
+<div class="footer footer-default">
 
 </div>
-<img data-src="Ch04_files/figure-revealjs/simulate-height-all-1.svg" class="r-stretch quarto-figure-center"><div class="footer footer-default">
-
+</section><section id="draw-lines-using-the-prior-predictive-simulation-output" class="slide level2 output-location-slide"><h2>Draw lines using the prior predictive simulation</h2><div class="cell output-location-slide" data-layout-align="center" data-hash="Ch04_cache/revealjs/draw-lines_01fa84eff5b0ce51de3674920341ec23">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="Ch04_files/figure-revealjs/draw-lines-1.svg"></p>
+</figure>
 </div>
-</section></section>
+</div>
+</div></section></section>
     </div>
   </div>
 

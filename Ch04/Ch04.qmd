@@ -57,7 +57,7 @@ m1 <- brm(
 summary(m1)
 ```
 
-## First, get default priors in `brms` 
+## First, get default priors in `brms`
 
 ```{r get-default-priors}
 get_prior(
@@ -85,7 +85,7 @@ An excerpt from `brms::set_prior`:
 >
 > ...
 >
-> In case of the default intercept parameterization (discussed in the 'Details' section of [**`brmsformula`**](http://127.0.0.1:29755/help/library/brms/help/brmsformula)), general priors on class `"b"` will [***not*** **affect the intercept**]{.underline}. Instead, the intercept has its own parameter class named `"Intercept"` and priors can thus be specified via `set_prior("<prior>", class = "Intercept")`. Setting a prior on the intercept will not break vectorization of the other population-level effects. Note that technically, [**this prior is set on an intercept that results when internally centering all population-level predictors around zero to improve sampling efficiency**]{.underline}. On this centered intercept, specifying a prior is actually much easier and intuitive than on the original intercept, since the former represents the expected response value when all predictors are at their means. To treat the intercept as an ordinary population-level effect and avoid the centering parameterization, use `0 + Intercept` on the right-hand side of the model formula.
+> In case of the default intercept parameterization (discussed in the 'Details' section of [**`brmsformula`**](http://127.0.0.1:29755/help/library/brms/help/brmsformula)), general priors on class `"b"` will [***not*****affect the intercept**]{.underline}. Instead, the intercept has its own parameter class named `"Intercept"` and priors can thus be specified via `set_prior("<prior>", class = "Intercept")`. Setting a prior on the intercept will not break vectorization of the other population-level effects. Note that technically, [**this prior is set on an intercept that results when internally centering all population-level predictors around zero to improve sampling efficiency**]{.underline}. On this centered intercept, specifying a prior is actually much easier and intuitive than on the original intercept, since the former represents the expected response value when all predictors are at their means. To treat the intercept as an ordinary population-level effect and avoid the centering parameterization, use `0 + Intercept` on the right-hand side of the model formula.
 
 We can manually centering variables beforehand, and put prior directly on `Intercept`.
 
@@ -175,6 +175,7 @@ prior_pred |>
 
 ```{r simulate-height}
 #| fig-align: center
+#| output-location: slide 
 prior_pred |> 
   tidybayes::predicted_rvars(
     tibble(weight_c = 0)
@@ -192,6 +193,7 @@ prior_pred |>
 
 ```{r simulate-height-all}
 #| fig-align: center
+#| output-location: slide 
 prior_pred |> 
   tidybayes::predicted_rvars(
     newdata = tibble(weight_c = seq(-14, 18))
@@ -199,6 +201,31 @@ prior_pred |>
   ggplot(aes(x = weight_c + mean(d$weight), ydist = .prediction)) +
   ggdist::stat_lineribbon() +
   scale_fill_brewer() + 
+  labs(
+    x = "Weight (kg)",
+    y = "Predicted Height (cm)"
+  ) + 
+  theme_new
+```
+
+## Draw lines using the prior predictive simulation
+
+```{r draw-lines}
+#| fig-align: center
+#| output-location: slide 
+d |> 
+  modelr::data_grid(weight_c) |> 
+  add_epred_draws(prior_pred, ndraws = 100) |> 
+  ggplot() +
+  geom_line(
+    aes(
+      x = weight_c + mean(d$weight),
+      y = .epred,
+      group = .draw,
+    ),
+    alpha = .3,
+    color = "#08519C"
+  ) +
   labs(
     x = "Weight (kg)",
     y = "Predicted Height (cm)"
