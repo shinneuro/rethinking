@@ -1,0 +1,161 @@
+---
+format:
+  revealjs:
+    theme: ["default", "../custom.scss"]
+    margin: 0.15
+    monofont: "JetBrains Mono"
+fig-align: center
+fig-format: svg
+fig-width: 8
+
+execute:
+  echo: true
+  # cache: true
+---
+
+# **Rethinking Ch. 02-03** {background-color="#17416A"}
+
+
+**Minho Shin**
+
+Ph.D Student<br/>Lab of Cognitive Neuroscience<br/>Department of Brain Sciences<br/>DGIST
+
+## Load library
+
+Load libraries that are going to be used throughout the two chapters.
+
+```{r load-library}
+library("tidyverse")
+library("rethinking")
+library("brms")
+library("cmdstanr")
+library("posterior")
+library("patchwork")
+options(mc.cores = 4)
+options(brms.backend = "cmdstanr")
+
+theme_new <- bayesplot::theme_default() + 
+  theme(text = element_text(family = "sans"))
+theme_old <- theme_set(theme_new)
+```
+
+# **ROS Ch.2 Small Worlds and Large Worlds** {background-color="#17416A"}
+
+## Bernoulli distribution
+
+$$
+f(k;p) = 
+\begin{cases}
+p & \text{if } k = 1,\\
+1-p & \text{if } k = 0
+\end{cases}
+$$
+
+If $p_{water} = 0.6$,
+
+```{r bernoulli-eg}
+#| fig-align: center
+#| code-fold: true
+
+p_water <- 0.6
+
+tibble(
+  x = c("water", "land"),
+  p = c(p_water, 1 - p_water)
+) |> 
+  ggplot() +
+  geom_col(aes(x = x, y = p)) +
+  labs(x = "", y = "probability")
+```
+
+## Example of Bernoulli distribution
+
+```{r bernoulli}
+#| fig-width: 12
+#| fig-align: center
+#| code-fold: true
+W <- 0
+L <- 1
+
+x <- seq(0,1,by=.01)
+y <- dbinom(W, size=W+L, prob=x)
+
+expand_grid(
+  W = c(0,1),
+  x = seq(0,1,by=.01)
+) |> 
+  mutate(y = dbinom(W, size=1, prob=x)) |> 
+  ggplot() +
+  geom_line(aes(x = x, y = y)) +
+  facet_wrap(~ W,
+             labeller = as_labeller(c(
+               `0` = "W = 0",
+               `1` = "W = 1"
+             )))
+```
+
+## Example of Binomial distribution
+
+$$
+\begin{aligned}
+Pr(W,L|p) &= \frac{(W+L)!}{W!L!}p^W(1-p)^L \\
+&={W+L \choose W}p^W(1-p)^L
+\end{aligned}
+$$
+
+```{r poisson-dist}
+#| fig-align: center
+#| code-fold: true
+W <- 6
+L <- 3
+
+x <- seq(0,1,by=.01)
+y <- dbinom(W, size=W+L, prob=x)
+
+tibble(x, y) |> 
+  ggplot() + 
+  geom_line(aes(x = x, y = y)) +
+  labs(x = "proportion of the water", y = "density", title = glue::glue("W={W}, L={L}"))
+```
+
+<!-- ## Binomial distribution -->
+
+<!-- ```{r poisson-dist} -->
+<!-- df_binom <- expand_grid( -->
+<!--   rate = seq(10, 100, 10), -->
+<!--   x = 1:100 -->
+<!-- ) |>  -->
+<!--   mutate( -->
+<!--     density = dbinom(x, rate) -->
+<!--   ) -->
+
+<!-- df_pois |>  -->
+<!--   mutate(rate = factor(rate)) |>  -->
+<!--   ggplot() +  -->
+<!--   geom_line(aes(x = x, y = density, colour = rate)) -->
+<!-- ``` -->
+
+## Quadratic Approximation using `quap` in `rethinking` package`
+
+```{r quap}
+globe.qa <- quap(
+  alist(W ~ dbinom(W+L ,p), # binomial likelihood 
+        p ~ dunif(0,1) # uniform prior
+        ), 
+  data=list(W=6,L=3)
+)
+precis( globe.qa )
+```
+
+## The same model in `stan` language
+
+```{r print-stancode}
+globe.qa <- ulam(
+  alist(W ~ dbinom(W+L ,p), # binomial likelihood 
+        p ~ dunif(0,1) # uniform prior
+        ), 
+  data=list(W=6,L=3),
+  sample=FALSE
+)
+cat(globe.qa[["model"]])
+```
