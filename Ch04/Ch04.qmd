@@ -1,0 +1,207 @@
+---
+format:
+  revealjs:
+    theme: ["default", "../custom.scss"]
+    margin: 0.15
+    monofont: "JetBrains Mono"
+fig-align: center
+fig-format: svg
+fig-width: 8
+
+execute:
+  echo: true
+  cache: true
+---
+
+# **Rethinking Ch. 4** {background-color="#17416A"}
+
+**Minho Shin**
+
+Ph.D Student<br/>Lab of Cognitive Neuroscience<br/>Department of Brain Sciences<br/>DGIST
+
+## Load library
+
+Load libraries that are going to be used throughout the chapter 4.
+
+```{r load-library}
+library("tidyverse")
+library("rethinking")
+library("brms")
+library("cmdstanr")
+library("posterior")
+library("tidybayes")
+library("patchwork")
+options(mc.cores = 4)
+options(brms.backend = "cmdstanr")
+
+theme_new <- bayesplot::theme_default() + 
+  theme(text = element_text(family = "sans"))
+theme_old <- theme_set(theme_new)
+```
+
+## Set the `height ~ weight` model in `brms`
+
+```{r set-brms}
+data(Howell1, package="rethinking")
+d <- Howell1 |> 
+  filter(age >= 18) |> 
+  mutate(weight_c = weight - mean(weight))
+
+m1 <- brm(
+  height ~ weight_c,
+  data = d, 
+  family = gaussian(),
+  refresh = 0
+)
+
+summary(m1)
+```
+
+## First, get default priors in `brms` 
+
+```{r get-default-priors}
+get_prior(
+  height ~ weight_c,
+  data = d, 
+  family = gaussian()
+)
+```
+
+## Before setting priors in `brms`
+
+An excerpt from `brms::brmsformula`:
+
+> **Parameterization of the population-level intercept**
+>
+> By default, the population-level intercept (if incorporated) is estimated separately and not as part of population-level parameter vector `b`. As a result, [**priors on the intercept also have to be specified separately**]{.underline}. Furthermore, to increase sampling efficiency, the population-level design matrix `X` is centered around its column means `X_means` if the intercept is incorporated. This leads to a temporary bias in the intercept equal to `<X_means, b>`, where `<,>` is the scalar product. The bias is corrected after fitting the model, but be aware that [**you are effectively defining a prior on the intercept of the centered design matrix not on the real intercept**]{.underline}. You can turn off this special handling of the intercept by setting argument center to `FALSE`. For more details on setting priors on population-level intercepts, see `set_prior`.
+>
+> This behavior can be avoided by using the reserved (and internally generated) variable `Intercept`. Instead of `y ~ x`, you may write `y ~ 0 + Intercept + x`. This way, priors can be defined on the real intercept, directly. In addition, the intercept is just treated as an ordinary population-level effect and thus priors defined on `b` will also apply to it. Note that this parameterization may be less efficient than the default parameterization discussed above.
+
+## Before setting priors in `brms`
+
+An excerpt from `brms::set_prior`:
+
+> 1\. Population-level ('fixed') effects
+>
+> ...
+>
+> In case of the default intercept parameterization (discussed in the 'Details' section of [**`brmsformula`**](http://127.0.0.1:29755/help/library/brms/help/brmsformula)), general priors on class `"b"` will [***not*** **affect the intercept**]{.underline}. Instead, the intercept has its own parameter class named `"Intercept"` and priors can thus be specified via `set_prior("<prior>", class = "Intercept")`. Setting a prior on the intercept will not break vectorization of the other population-level effects. Note that technically, [**this prior is set on an intercept that results when internally centering all population-level predictors around zero to improve sampling efficiency**]{.underline}. On this centered intercept, specifying a prior is actually much easier and intuitive than on the original intercept, since the former represents the expected response value when all predictors are at their means. To treat the intercept as an ordinary population-level effect and avoid the centering parameterization, use `0 + Intercept` on the right-hand side of the model formula.
+
+We can manually centering variables beforehand, and put prior directly on `Intercept`.
+
+## Setting priors in `brms` (Possibility 1)
+
+```{r set-prior-1}
+priors <- c(
+  prior(normal(178, 20), class = Intercept),
+  prior(lognormal(0, 1), class = b, lb = 0),
+  prior(uniform(0, 50), class = sigma, ub = 50)
+)
+
+m2.1 <- brm(
+  height ~ 1 + weight_c,
+  data = d, 
+  family = gaussian(),
+  prior = priors,
+  refresh = 0
+)
+
+summary(m2.1)
+```
+
+## Setting priors in `brms` (Possibility 2)
+
+```{r set-prior-2}
+priors <- c(
+  prior(normal(178, 20), class = b, coef = Intercept),
+  prior(lognormal(0, 1), class = b, lb = 0),
+  prior(uniform(0, 50), class = sigma, ub = 50)
+)
+
+m2.2 <- brm(
+  height ~ 0 + Intercept + weight_c,
+  data = d, 
+  family = gaussian(),
+  prior = priors,
+  refresh = 0
+)
+
+summary(m2.2)
+```
+
+## Prior predictive simulation
+
+Use `sample_prior = "only"` to sample from the prior distribution. The default option is `"no"`, where you can use `"yes"` to sample from both the prior and the posterior distribution.
+
+```{r prior-predictive}
+priors <- c(
+  prior(normal(178, 20), class = b, coef = Intercept),
+  prior(lognormal(0, 1), class = b, lb = 0),
+  prior(uniform(0, 50), class = sigma, ub = 50)
+)
+
+prior_pred <- brm(
+  height ~ 0 + Intercept + weight_c,
+  data = d, 
+  family = gaussian(),
+  prior = priors,
+  sample_prior = "only",
+  refresh = 0
+)
+```
+
+## Prior samples
+
+```{r prior-samples}
+prior_pred |> 
+  as_draws_df() # transform `brmsfit` to `posterior::draws` objects
+```
+
+## Empirical prior distribution
+
+```{r simulate-prior-params}
+#| fig-width: 9
+#| fig-height: 3
+#| fig-align: center
+prior_pred |> 
+  tidybayes::gather_rvars(b_Intercept, b_weight_c, sigma) |> 
+  ggplot(aes(xdist = .value)) +
+  ggdist::stat_halfeye(normalize = "panels") +
+  facet_wrap(~ .variable, scales = "free") +
+  theme_new
+```
+
+## Simulated `height` from the priors (for the mean `weight`)
+
+```{r simulate-height}
+#| fig-align: center
+prior_pred |> 
+  tidybayes::predicted_rvars(
+    tibble(weight_c = 0)
+  ) |> 
+  ggplot() +
+  ggdist::stat_halfeye(aes(xdist = .prediction)) +
+  labs(
+    x = expression("Predicted "* Height[weight==0]),
+    y = "density"
+  ) + 
+  theme_new
+```
+
+## Simulate `height` from priors (across `weight`)
+
+```{r simulate-height-all}
+#| fig-align: center
+prior_pred |> 
+  tidybayes::predicted_rvars(
+    newdata = tibble(weight_c = seq(-14, 18))
+  ) |> 
+  ggplot(aes(x = weight_c + mean(d$weight), ydist = .prediction)) +
+  ggdist::stat_lineribbon() +
+  scale_fill_brewer() + 
+  labs(
+    x = "Weight (kg)",
+    y = "Predicted Height (cm)"
+  ) + 
+  theme_new
+```
